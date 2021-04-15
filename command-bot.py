@@ -1,9 +1,9 @@
 import discord
 from discord import embeds
 
-PASSER_COMMANDE_ID = 815339353365544981
-CHANNEL_COMMANDES_ID = 688084123725725800
-CHANNEL_ERREURS_ID = 815344478784454667
+PASSER_COMMANDE_ID = 815339353365544981   # id du channel où réagir pour poster l'annonce
+CHANNEL_COMMANDES_ID = 688084123725725800 # id du channel ou diffuser l'annonce
+CHANNEL_ERREURS_ID = 815344478784454667   # en cas d'erreur, mettre un log dans ce channel privé du staff
 
 intents = discord.Intents.default()
 intents.members = True
@@ -12,6 +12,7 @@ client = discord.Client(intents=intents)
 
 
 # menus et embeds constants
+# ce sont les embeds pour guider les clients par mp
 PREMIER_EMBED = discord.Embed(title="Passer une annonce",description="Salut ! Je suis le bot de Coin Des Devs, nous allons configurer ton annonce, fais bien attention à respecter les indiquations que je te donnerais ^^\nCa ne sera pas long !")
 PREMIER_EMBED.add_field(name="Un beau titre",value="Commence par définir un titre à ta commande. Fais le court et précis !\nAttention, le prochain message que tu enverras sera mis en titre !")
 PREMIER_EMBED.set_footer(text="Cette demande expire dans 10 minutes.")
@@ -42,30 +43,32 @@ async def on_raw_reaction_add(reaction):
         
         channel = client.get_channel(PASSER_COMMANDE_ID)
         message = await channel.fetch_message(reaction.message_id)
-        await message.remove_reaction(reaction.emoji, reaction.member) #on retire sa réaction
+        await message.remove_reaction(reaction.emoji, reaction.member) #on retire la réaction du client
 
-        try: # un try pour les utilisateurs aux dm fermés
+        try: # un try pour les utilisateurs aux dm fermés (cause un crash lors de la création du dm). Il y a surement une propriété pour savoir si les dm d'un membre sont fermés ou non mais eh, ça marche x)
             dm = reaction.member.dm_channel
             if dm == None:
                 await reaction.member.create_dm()
                 dm = reaction.member.dm_channel
             await dm.send(embed=PREMIER_EMBED)
 
-        except Exception as err:
+        except Exception as err: # on est informé dans le channel du staff, si le client se plaint on saura ce qu'il s'est passé
             print(err)
             await client.get_channel(CHANNEL_ERREURS_ID).send("<@" + str(reaction.member.id) + ">, tu dois ouvrir tes dm pour que nous puissions y configurer ta commande.\n(tu pourras bien sur les refermer quand nous aurons fini)")
             return # on ne vas pas plus loin
         
-        def check(message):
+        # on va maintenant attendre les réponses aux questions posées par le bot en mp. Discord à des fonctions pour ça mais de ce que j'ai vu, le try est obligatoire
+        def check(message): # Ici on va juste attendre jusqu'à ce que le message (la réponse) de l'utilisateur soit correct pour être considéré comme réponse. Il me semble que le maximum de caractères pour une catégorie d'embed est 1024, alors on vérifie en amont.
             return len(message.content) <= 1024 and message.channel == dm and message.author != client.user
         
         try:
-            message = await client.wait_for("message",check=check,timeout=600)
+            message = await client.wait_for("message",check=check,timeout=600) # En arrivant au timeout, ça crash et on peut donc passer dans le except. Si non la réponse est dans la variable message
         except Exception as err:
             #print(err)
             await dm.send("Ta demande a expiré... Tu pourras toujours en refaire une ^^")
             return # on ne va pas plus loin
         
+        # je vais pas commenter la suite parce que c'est la même chose pour tous les embeds ou presque
         await dm.send('Ok, titre mis à "' + message.content + '" !')
         titre = message.content
         await dm.send(embed=SECOND_EMBED)
@@ -94,7 +97,7 @@ async def on_raw_reaction_add(reaction):
         await dm.send(embed=QUATRIEME_EMBED)
         
         
-        try:  # la ligne suivante est un peu sale mais c'est juste une redéfinition de check avec 25 comme longueur max
+        try:  # la ligne suivante est un peu sale mais c'est juste une redéfinition de check avec 25 comme longueur max parce qu'on veut juste le nom d'un langage
             message = await client.wait_for("message",check=lambda msg:len(msg.content) <= 25 and msg.channel == dm and msg.author != client.user,timeout=600)
         except Exception as err:
             await dm.send("Ta demande a expiré... Tu pourras toujours en refaire une ^^")
@@ -106,7 +109,7 @@ async def on_raw_reaction_add(reaction):
         await dm.send(embed=CINQUIEME_EMBED)
         
         
-        try:  # la ligne suivante est un peu sale mais c'est juste une redéfinition de check avec 25 comme longueur max
+        try:  # la ligne suivante est un peu sale mais c'est juste une redéfinition de check avec 25 comme longueur max parce qu'on veut juste un prix
             message = await client.wait_for("message",check=lambda msg:len(msg.content) <= 25 and msg.channel == dm and msg.author != client.user,timeout=600)
         except Exception as err:
             await dm.send("Ta demande a expiré... Tu pourras toujours en refaire une ^^")
@@ -115,20 +118,27 @@ async def on_raw_reaction_add(reaction):
         await dm.send("Ok, j'ai pris en compte ta réponse : " + message.content)
         prix_commande = message.content
 
-        temp_embed = discord.Embed(title=titre,description=description_projet,color=int(str(message.id)[-7:]))
+        # on créé l'embed de la commande
+        temp_embed = discord.Embed(title=titre,description=description_projet,color=int(str(message.id)[-7:])) # pour la couleur j'ai fait un truc qui se base sur l'id du message
         temp_embed.set_thumbnail(url=message.author.avatar_url)
         temp_embed.add_field(name="Programme demandé :",value = description_programme,inline=False)
         temp_embed.add_field(name="Domaine :",value = domaine_commande)
         temp_embed.add_field(name="Budget :",value = prix_commande)
         await dm.send(embed=temp_embed)
-        await dm.send("Ok tout est setup, tu peux vérifier l'aspect final juste au dessus. Pour l'envoyer, fais `send`.\nSinon cette demande expirera dans 1 minute.")
+        await dm.send("Ok tout est setup, tu peux vérifier l'aspect final de ta commande juste au dessus. Pour l'envoyer, fais `send`.\nSinon cette demande expirera dans 1 minute.")
         
-        try:  # la ligne suivante est un peu sale mais c'est juste une redéfinition de check avec 25 comme longueur max
+        try:  # la ligne suivante est un peu sale (toujours) mais je cherche cette fois le message "send"
             message = await client.wait_for("message",check=lambda msg:msg.content == "send" and msg.channel == dm and msg.author != client.user,timeout=60)
         except Exception as err:
             await dm.send("Ta demande a expiré... Tu pourras toujours en refaire une ^^")
             return # on ne va pas plus loin
-
+    
+    await dm.send("Envoyons tout ça ! Si tu ne vois pas ta commande apparaitre dans le salon commandes, appelle un admin ^^")
+    # on lui ajoute aussi le role client
+    guild = client.get_guild(reaction.guild_id)
+    Role = discord.utils.get(guild.roles, name="client")
+    await reaction.member.add_roles(Role)
+    # et on envoie la commande
     cmdChannel = client.get_channel(CHANNEL_COMMANDES_ID)
     await cmdChannel.send("**__Commande de :__** <@" + str(message.author.id) + ">",embed=temp_embed)
 
