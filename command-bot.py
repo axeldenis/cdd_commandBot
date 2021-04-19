@@ -29,7 +29,7 @@ QUATRIEME_EMBED = discord.Embed(title="Domaine de ta demande",description="Indiq
 QUATRIEME_EMBED.add_field(name="Attention",value="La longueur maximale acceptée pour ta réponse est 25 lettres.")
 QUATRIEME_EMBED.add_field(name="Exemples :",value="Site Web\nJeu Vidéo\nBot Discord\nC++\nPHP\n...")
 
-CINQUIEME_EMBED = discord.Embed(title="Prix de ta demande",description="Indique ton budget, tu peux donner un intervale si besoin.")
+CINQUIEME_EMBED = discord.Embed(title="Prix de ta demande",description="Indique ton budget dans une fourchette, par exemple : 100-150€.")
 CINQUIEME_EMBED.add_field(name="Consignes",value="**Ton prix doit respecter les tendances de prix indiquées dans #dev-pub par les développeurs.**\nNous ne travaillerons pas pour des sommes anormalement faibles.\n Il est conseillé de regarder les propositions dans #dev-pub pour se faire une idée des prix et services.")
 
 @client.event
