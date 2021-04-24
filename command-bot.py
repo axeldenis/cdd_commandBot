@@ -124,10 +124,10 @@ async def on_raw_reaction_add(reaction):
         temp_embed.add_field(name="Programme demandé :",value = description_programme,inline=False)
         temp_embed.add_field(name="Domaine :",value = domaine_commande)
         temp_embed.add_field(name="Budget :",value = prix_commande)
-        temp_embed.set_footer(text="Pour les devs : si vous trouvez cette commande inappropriée, réagissez avec ❌. Si vous prenez la commande, réagissez avec ✅.")
+        
         await dm.send(embed=temp_embed)
         await dm.send("Ok tout est setup, tu peux vérifier l'aspect final de ta commande juste au dessus. Pour l'envoyer, fais `send`.\nSinon cette demande expirera dans 1 minute.")
-        
+        temp_embed.set_footer(text="Pour les devs : si vous trouvez cette commande inappropriée, réagissez avec ❌. Si vous prenez la commande, réagissez avec ✅.") # je met cette ligne après l'envoi pour la cacher sur l'apperçu envoiyé par mp
         try:  # la ligne suivante est un peu sale (toujours) mais je cherche cette fois le message "send"
             message = await client.wait_for("message",check=lambda msg:msg.content == "send" and msg.channel == dm and msg.author != client.user,timeout=60)
         except Exception as err:
@@ -158,5 +158,5 @@ async def on_message(message):
     
     if message.content == "test":
         await message.channel.send(str(message.channel.id))
-
+        
 client.run('')
