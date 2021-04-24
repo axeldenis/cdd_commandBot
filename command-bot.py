@@ -124,6 +124,7 @@ async def on_raw_reaction_add(reaction):
         temp_embed.add_field(name="Programme demandé :",value = description_programme,inline=False)
         temp_embed.add_field(name="Domaine :",value = domaine_commande)
         temp_embed.add_field(name="Budget :",value = prix_commande)
+        temp_embed.set_footer(text="Pour les devs : si vous trouvez cette commande inappropriée, réagissez avec ❌. Si vous prenez la commande, réagissez avec ✅.")
         await dm.send(embed=temp_embed)
         await dm.send("Ok tout est setup, tu peux vérifier l'aspect final de ta commande juste au dessus. Pour l'envoyer, fais `send`.\nSinon cette demande expirera dans 1 minute.")
         
