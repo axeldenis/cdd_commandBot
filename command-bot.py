@@ -58,7 +58,7 @@ async def on_raw_reaction_add(reaction):
         except Exception as err: # on est informé dans le channel du staff, si le client se plaint on saura ce qu'il s'est passé
             print(err)
             await client.get_channel(CHANNEL_ERREURS_ID).send(reaction.member.mention + ", tu dois ouvrir tes dm pour que nous puissions y configurer ta commande.\n(tu pourras bien sur les refermer quand nous aurons fini)")
-            await client.get_channel(PASSER_COMMANDE_ID).Send(reaction.member.mention + ", vos messages privés sont fermés", delete_after=15)
+            await client.get_channel(PASSER_COMMANDE_ID).send(reaction.member.mention + ", vos messages privés sont fermés", delete_after=15)
             return # on ne vas pas plus loin
         
         # on va maintenant attendre les réponses aux questions posées par le bot en mp. Discord à des fonctions pour ça mais de ce que j'ai vu, le try est obligatoire
@@ -153,7 +153,7 @@ async def on_message(message):
         return
 
     if message.content.startswith('$hello'):
-        await message.channel.send('Salut, bg !')
+        await message.channel.send('Salut !')
     
     if message.content == "test":
         await message.channel.send(str(message.channel.id))
