@@ -34,13 +34,16 @@ CINQUIEME_EMBED.add_field(name="Consignes",value="**Ton prix doit respecter les 
 
 @client.event
 async def on_ready():
-    print('We have logged in as {0.user}'.format(client))
+    print('We have logged in as {0.user}, verion: {1.version_info}:{1.__version__}'.format(client, discord))
 
 @client.event
 async def on_raw_reaction_add(reaction):
 
     if reaction.channel_id == PASSER_COMMANDE_ID and not reaction.member == client.user: # quand il y a réaction, on va voir avec le client pour passer commande | accepte toutes les réactions sur n'importe quel message du channel
-        
+
+        if(reaction.emoji.name != ":arrows_counterclockwise:"):
+            return
+
         channel = client.get_channel(PASSER_COMMANDE_ID)
         message = await channel.fetch_message(reaction.message_id)
         await message.remove_reaction(reaction.emoji, reaction.member) #on retire la réaction du client
@@ -54,7 +57,8 @@ async def on_raw_reaction_add(reaction):
 
         except Exception as err: # on est informé dans le channel du staff, si le client se plaint on saura ce qu'il s'est passé
             print(err)
-            await client.get_channel(CHANNEL_ERREURS_ID).send("<@" + str(reaction.member.id) + ">, tu dois ouvrir tes dm pour que nous puissions y configurer ta commande.\n(tu pourras bien sur les refermer quand nous aurons fini)")
+            await client.get_channel(CHANNEL_ERREURS_ID).send(reaction.member.mention + ", tu dois ouvrir tes dm pour que nous puissions y configurer ta commande.\n(tu pourras bien sur les refermer quand nous aurons fini)")
+            await client.get_channel(PASSER_COMMANDE_ID).Send(reaction.member.mention + ", vos messages privés sont fermés", delete_after=15)
             return # on ne vas pas plus loin
         
         # on va maintenant attendre les réponses aux questions posées par le bot en mp. Discord à des fonctions pour ça mais de ce que j'ai vu, le try est obligatoire
@@ -141,12 +145,7 @@ async def on_raw_reaction_add(reaction):
     await reaction.member.add_roles(Role)
     # et on envoie la commande
     cmdChannel = client.get_channel(CHANNEL_COMMANDES_ID)
-    await cmdChannel.send("**__Commande de :__** <@" + str(message.author.id) + ">",embed=temp_embed)
-
-        
-
-
-
+    await cmdChannel.send("**__Commande de :__** " + reaction.member.mention + ",embed=temp_embed)
 
 @client.event
 async def on_message(message):
@@ -154,7 +153,7 @@ async def on_message(message):
         return
 
     if message.content.startswith('$hello'):
-        await message.channel.send('Hello!')
+        await message.channel.send('Salut, bg !')
     
     if message.content == "test":
         await message.channel.send(str(message.channel.id))
