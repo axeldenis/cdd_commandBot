@@ -5,6 +5,14 @@ PASSER_COMMANDE_ID = 815339353365544981   # id du channel où réagir pour poste
 CHANNEL_COMMANDES_ID = 688084123725725800 # id du channel ou diffuser l'annonce
 CHANNEL_ERREURS_ID = 815344478784454667   # en cas d'erreur, mettre un log dans ce channel privé du staff
 
+ROLE_FONDA_ID = 687691931840413696
+ROLE_ADMIN_ID = 687693135987605512
+ROLE_MODO_ID = 687692744365309966
+ROLE_DEV_ID = 687692238301691959
+ROLE_CLIENT_ID = 687694457684099078
+
+MESSAGE_DELETE_MIN_REACTION_COUNT = 20
+
 intents = discord.Intents.default()
 intents.members = True
 
@@ -39,13 +47,25 @@ async def on_ready():
 @client.event
 async def on_raw_reaction_add(reaction):
 
-    if reaction.channel_id == PASSER_COMMANDE_ID and not reaction.member == client.user: # quand il y a réaction, on va voir avec le client pour passer commande | accepte toutes les réactions sur n'importe quel message du channel
+	channel = client.get_channel(PASSER_COMMANDE_ID)
+    message = await channel.fetch_message(reaction.message_id)
 
-        if(reaction.emoji.name != ":arrows_counterclockwise:"):
+	if reaction.channel.id == CHANNEL_COMMANDES_ID and not reaction.member = client.user:
+		modo = await channel.guild.get_role(ROLE_DEV_ID)
+		if not modo in reaction.member.roles:
+			return
+		if not reaction.emoji.name == "x":
+            return
+        for rea in message.reactions:
+        	if rea.emoji.name == "x":
+        		if rea.count >= MESSAGE_DELETE_MIN_REACTION_COUNT:
+        			message.delete()
+
+    elif reaction.channel_id == PASSER_COMMANDE_ID and not reaction.member == client.user: # quand il y a réaction, on va voir avec le client pour passer commande | accepte toutes les réactions sur n'importe quel message du channel
+
+        if not reaction.emoji.name == "arrows_counterclockwise":
             return
 
-        channel = client.get_channel(PASSER_COMMANDE_ID)
-        message = await channel.fetch_message(reaction.message_id)
         await message.remove_reaction(reaction.emoji, reaction.member) #on retire la réaction du client
 
         try: # un try pour les utilisateurs aux dm fermés (cause un crash lors de la création du dm). Il y a surement une propriété pour savoir si les dm d'un membre sont fermés ou non mais eh, ça marche x)
@@ -58,7 +78,7 @@ async def on_raw_reaction_add(reaction):
         except Exception as err: # on est informé dans le channel du staff, si le client se plaint on saura ce qu'il s'est passé
             print(err)
             await client.get_channel(CHANNEL_ERREURS_ID).send(reaction.member.mention + ", tu dois ouvrir tes dm pour que nous puissions y configurer ta commande.\n(tu pourras bien sur les refermer quand nous aurons fini)")
-            await client.get_channel(PASSER_COMMANDE_ID).send(reaction.member.mention + ", vos messages privés sont fermés", delete_after=15)
+            await client.get_channel(PASSER_COMMANDE_ID).Send(reaction.member.mention + ", vos messages privés sont fermés", delete_after=15)
             return # on ne vas pas plus loin
         
         # on va maintenant attendre les réponses aux questions posées par le bot en mp. Discord à des fonctions pour ça mais de ce que j'ai vu, le try est obligatoire
@@ -145,7 +165,7 @@ async def on_raw_reaction_add(reaction):
     await reaction.member.add_roles(Role)
     # et on envoie la commande
     cmdChannel = client.get_channel(CHANNEL_COMMANDES_ID)
-    await cmdChannel.send("**__Commande de :__** " + reaction.member.mention + ",embed=temp_embed)
+    await cmdChannel.send("**__Commande de :__** " + reaction.member.mention + ",embed=temp_embed")
 
 @client.event
 async def on_message(message):
@@ -153,9 +173,23 @@ async def on_message(message):
         return
 
     if message.content.startswith('$hello'):
-        await message.channel.send('Salut !')
+        await message.channel.send('Salut, bg !')
     
     if message.content == "test":
         await message.channel.send(str(message.channel.id))
+
+@client.event
+async def on_member_remove(member):
+	remove_commandes(member)
+
+@client.event
+async def on_member_ban(guild, member):
+	remove_commandes(member)
+
+async def remove_commandes(member):
+	for message in client.get_channel(CHANNEL_COMMANDES_ID).history():
+		if member.mention in message.mentions:
+			await message.delete()
+
         
 client.run('')
